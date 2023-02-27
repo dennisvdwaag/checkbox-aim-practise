@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkbox aim practise</title>
+    <style>
+        @font-face {
+            font-family: 'Roboto Mono';
+            src: url(RobotoMono-Thin.ttf);
+        }
+
+        * {
+            color: white;
+            font-family: 'Roboto Mono';
+        }
+
+        html {
+            margin: 0;
+        }
+
+        body {
+            background: black;
+            margin: 0;
+            font-family: 'Roboto Mono';
+        }
+
+        input[type="checkbox"] {
+            margin: 0;
+        }
+
+        #data {
+            position: fixed;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 30px;
+        }
+
+        .button {
+            background: none;
+            border: 2px solid white;
+            padding: 20px 30px;
+            font-size: 20px;
+            transition: all .15s ease;
+            cursor: pointer;
+        }
+        .button:hover {
+            border-style: dashed !important;
+        }
+
+        #startPractise {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+    </style>
+</head>
+<body>
+    <div id="data">
+        Score: <span id="points">0</span>
+        Timer: <span id="timer">00:10:000</span>
+    </div>
+
+    <template id="startPractiseButton">
+        <button id="startPractise" class="button">Start practise</button>
+    </template>
+
+    <template id="checkBox">
+        <input type="checkbox" tabindex="-1" />
+    </template>
+
+    <template id="endResults">
+        <div class="overlay" style="position: fixed; height: 100%; width: 100%; z-index: 10;">
+            <div id="results" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); border: 1px solid white; padding: 30px; width: 500px; background: black; text-align: center;">
+                <h2 style="margin: 0;">Well done!</h2>
+                <p>You've scored a grand total of %total% points in %seconds% seconds!</p>
+                <button style="margin-top: 15px;" id="playAgain" class="button">Play again!</button>
+            </div>
+        </div>
+    </template>
+
+    <script>
+        let currentScore = 0;
+        const pointsHolder = document.querySelector('#points');
+        const timeHolder = document.querySelector('#timer');
+
+        const loadGame = () => {
+            const startPractiseButtonTemplate = document.querySelector('#startPractiseButton');
+            const startPractise = startPractiseButtonTemplate.content.firstElementChild.cloneNode(true);
+    
+            document.querySelector('body').appendChild(startPractise);
+    
+            startPractise.addEventListener('click', () => {
+                startPractise.style.opacity = 0;
+    
+                setTimeout(() => {
+                    startPractise.remove();
+                    addCheckBox();
+                    startTimer(10);
+                }, 150);
+            });
+        }
+
+        const getRandomIntBetween = (min, max) => {
+            min = Math.ceil(min);
+            max = Math.floor(max);
+            return Math.floor(Math.random() * (max - min) + min);
+        }
+
+        const addCheckBox = () => {
+            const size = getRandomIntBetween(10, 35);
+
+            const checkBoxTemplate = document.querySelector('#checkBox');
+            const checkBox = checkBoxTemplate.content.firstElementChild.cloneNode();
+
+            checkBox.style.height = `${size}px`;
+            checkBox.style.width = `${size}px`;
+
+            const posX = getRandomIntBetween(size, window.innerWidth - size);
+            const posY = getRandomIntBetween(size, window.innerHeight - size);
+            checkBox.style.position = 'fixed';
+            checkBox.style.left = `${posX}px`;
+            checkBox.style.top = `${posY}px`;
+    
+            document.querySelector('body').appendChild(checkBox);
+
+            checkBox.addEventListener('click', (e) => {
+                if (e.target.checked) {
+                    checkBox.remove();
+
+                    currentScore++;
+                    pointsHolder.innerHTML = currentScore;
+
+                    addCheckBox();
+                }
+            });
+        };
+
+        const startTimer = (timeInSeconds) => {
+            const end = new Date().getTime() + (timeInSeconds * 1000);
+            
+            const timer = setInterval(() => {
+                const start = new Date().getTime();
+                const distance = end - start;
+
+                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+                const milliseconds = distance - Math.floor(distance / 1000) * 1000;
+
+                timeHolder.innerHTML = `${('00' + minutes).substr(minutes.toString().length)}:${('00' + seconds).substr(seconds.toString().length)}:${('000' + milliseconds).substr(milliseconds.toString().length)}`;
+
+                if (distance < 0) {
+                    clearInterval(timer);
+                    timeHolder.innerHTML = '00:00:000';
+                    document.querySelector('input').remove();
+
+                    endResults(currentScore, timeInSeconds);
+                }
+            }, 1);
+        };
+
+        const endResults = (total, seconds) => {
+            const resultsTemplate = document.querySelector('#endResults');
+            const results = resultsTemplate.content.firstElementChild.cloneNode(true);
+            const playAgain = results.querySelector('#playAgain');
+
+            results.querySelector('p').innerHTML = results.querySelector('p').innerHTML.replace('%total%', total).replace('%seconds%', seconds);
+            
+            playAgain.addEventListener('click', () => {
+                results.remove();
+                reset();
+            });
+
+            document.querySelector('body').appendChild(results);
+        }
+
+        const reset = () => {
+            currentScore = 0;
+            pointsHolder.innerHTML = 0;
+            timeHolder.innerHTML = '00:10:000';
+
+            loadGame();
+        }
+
+        loadGame();
+    </script>
+</body>
+</html>
